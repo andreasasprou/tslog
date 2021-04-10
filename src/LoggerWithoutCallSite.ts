@@ -438,6 +438,11 @@ export class LoggerWithoutCallSite {
     return logObject;
   }
 
+  private isWritable<T extends Object>(obj: T, key: keyof T) {
+    const desc = Object.getOwnPropertyDescriptor(obj, key) || {}
+    return Boolean(desc.writable)
+  }
+
   private _buildErrorObject(
     error: Error,
     exposeErrorCodeFrame: boolean = true,
@@ -460,7 +465,11 @@ export class LoggerWithoutCallSite {
     ) as unknown) as IErrorObject;
     errorObject.nativeError = error;
     errorObject.details = { ...error };
-    errorObject.name = errorObject.name ?? "Error";
+
+    if (this.isWritable(errorObject, 'name')) {
+      errorObject.name = errorObject.name ?? "Error";
+    }
+
     errorObject.isError = true;
     errorObject.stack = this._toStackObjectArray(relevantCallSites);
     if (errorObject.stack.length > 0) {
